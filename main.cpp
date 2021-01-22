@@ -3,19 +3,16 @@
 #include<vector>
 using namespace std;
 void createFile(string fileName, int numRecord);
-//int insertRecord(string fileName, int key, int address, );
-int deleteRecord (string fileName, int recordNo);
-void displayContent(string fileName,int numRecord);
-int searchRecord (string fileName, int recordNo);
-void defaultArray(int arr[][11],int numRecord);
-void printArr(int arr[][11],int numRecord);
+int deleteRecord(string fileName, int recordNo);
+void displayContent(string fileName, int numRecord);
 
+void defaultArray(int** arr, int numRecord);
+void printArr(int** arr, int numRecord);
 
-template <class T>
 class Node
 {
 public:
-    T* key;
+    int* key;
     int* address;
     Node** child;
     bool isLeaf;
@@ -29,7 +26,7 @@ public:
     Node(int order)
     {
         //create array of key
-        key = new T[order + 1];
+        key = new int[order + 1];
         //get array of key NULL value
         for (int i = 0; i < order + 1; i++)
             key[i] = NULL;
@@ -41,7 +38,7 @@ public:
         // the leaf true
         isLeaf = true;
         //create array of children
-        child = new Node<T> *[order + 1];
+        child = new Node* [order + 1];
         //no key =0
         noKey = 0;
         //get array of child = NULL
@@ -49,9 +46,9 @@ public:
         {
             child[i] = NULL;
         }
-        parent = new Node<T>();
+        parent = new Node();
     }
-    Node* insertInNode(T& item, int add, Node* node, int order, Node* temp)
+    Node* insertInNode(int& item, int add, Node* node, int order, Node* temp)
     {
         //check if node is leaf
         //cout << item << "     11111111111111"<< isLeaf<<endl;
@@ -105,7 +102,7 @@ public:
             if (this == temp)
             {
                 //create node will be root
-                Node<T>* newNode = new Node<T>(order);
+                Node* newNode = new Node(order);
                 // the node will be not leaf becouse it has child
                 newNode->isLeaf = false;
                 newNode->child[0] = this;
@@ -130,7 +127,7 @@ public:
     void split(Node* node, int order)
     {
         //crear node will be wight of node
-        Node<T>* right = new Node<T>(order);
+        Node* right = new Node(order);
 
         int minChild;
         if (order % 2 == 0)
@@ -148,9 +145,9 @@ public:
         int check = (order) / 2;
 
         int counter = node->noKey;
-        T temp = node->key[check];
+        int temp = node->key[check];
         int tempadd = node->address[check];
-        T temp2 = node->key[order];
+        int temp2 = node->key[order];
         int temp2add = node->address[order];
         int iC = 0;
         //
@@ -221,7 +218,7 @@ public:
         key[j] = temp2;
         address[j] = temp2add;
         noKey = noKey + 1;
-        for(int i =0 ; i<noKey-1; i++)
+        for (int i = 0; i < noKey - 1; i++)
         {
             if (key[i] == key[i + 1])
             {
@@ -236,18 +233,20 @@ public:
         key[noKey] = NULL;
         address[noKey] = NULL;
     }
-    void print(string space)
+    void print(string space, int** arr, int index)
     {
-        cout << space;
-        for (int i = 0; i < noKey; i++)
-        {
-            if (i + 1 == noKey)
-                cout << key[i] << " " << address[i];
-            else
-                cout << key[i] << " " << address[i] << ",";
-
+        if(isLeaf){
+           arr[index][0] = 0;
+        }else{
+           arr[index][0] = 1;
         }
-        cout << endl;
+        int j = 0;
+        int i = 1;
+        for (; j < noKey; j++,i++)
+        {
+            arr[index][i] = key[j];
+            arr[index][++i] = address[j];
+        }
     }
     void printl(Node* temp, int l)
     {
@@ -282,18 +281,23 @@ public:
         child[0]->height(temp, h + 1, result);
     }
 };
-template <class T, int order>
+
 class BTree
 {
 public:
-    Node<T>* root = NULL;
-    int o = order;
-    void Insert(T item, int add)
+    Node* root = NULL;
+    int o;
+    BTree(int order)
+    {
+        o = order;
+    }
+
+    void Insert(int item, int add)
     {
         //if tree is empty
         if (root == NULL)
         {
-            root = new Node<T>(o);
+            root = new Node(o);
             root->isLeaf = true;
             root->key[0] = item;
             root->address[0] = add;
@@ -306,24 +310,31 @@ public:
         }
     }
 
-    void pre(Node<T>* node, string space)
+    void pre(Node* node, string space, int** arr)
     {
+        static int c = 1;
         if (node == NULL)
+        {
             return;
+        }
         else
         {
-            node->print(space);
-            space += "  ";
-            for (int i = 0; i < order; i++)
+            node->print(space, arr, c);
+            arr[0][1] = c + 1;
+            for (int i = 0; i < o; i++)
             {
                 if (node->child[i] != NULL)
-                    pre(node->child[i], space);
+                {
+                    c++;
+                    pre(node->child[i], space, arr);
+                }
+
             }
         }
     }
-    void Print()
+    void Print(int** arr)
     {
-        pre(root, "");
+        pre(root, "", arr);
         cout << endl;
     }
 
@@ -348,13 +359,56 @@ public:
         root = NULL;
     }
 };
-template <class T>
-int insertRecord(string fileName, int key, int address, BTree<T,5>*& btree);
+void insertRecord(string fileName, int key, int address, int num, BTree* btree)
+{
+    btree->Insert(key,address);
+    int** arr = new int* [num];
+    for (int i = 0; i < num; i++)
+    {
+        arr[i] = new int[11];
+    }
+    defaultArray(arr,num);
+    btree->Print(arr);
+    fstream indexFile;
+    indexFile.open(fileName+".txt", ios::out|ios::trunc);
+    indexFile.unsetf(ios::skipws);
+    for (int i = 0; i < num; i++)
+    {
+        for (int j = 0; j < 11; j++)
+        {
+            indexFile.write((char*)&(arr[i][j]), sizeof(arr[i][j]));
+        }
+    }
+    indexFile.close();
+}
+int searchRecord(string fileName, int key,int num, BTree* btree)
+{
+    int** arr = new int* [num];
+    for (int i = 0; i < num; i++)
+    {
+        arr[i] = new int[11];
+    }
+    defaultArray(arr,num);
+    btree->Print(arr);
+    int reNum = -1;
+    for(int i = 1 ; i<num; i++)
+    {
+        for(int j = 1 ; j< 11 ; j+=2)
+        {
+            cout<<arr[i][j]<<endl;
+            if(arr[i][j] == key)
+            {
+                cout<<arr[i][j]<<endl;
+                reNum = arr[i][j+1];
+                return reNum;
+            }
+        }
+    }
+    return reNum;
+}
 int main()
 {
-
-    BTree<int,5> btree;
-
+    BTree* btree = new BTree(5);
     string fileName;
     int numRecord;
 
@@ -365,6 +419,7 @@ int main()
     cin >> numRecord;
 
     createFile(fileName, numRecord);
+
     int choice;
     do
     {
@@ -377,129 +432,104 @@ int main()
 
         cin >> choice;
 
-        switch(choice)
+        switch (choice)
         {
 
         case 1:
             int key, address;
-
             cout << "Enter key and address respectively: ";
             cin >> key >> address;
-            insertRecord(fileName, key, address,btree);
+            insertRecord(fileName, key, address,numRecord, btree);
             break;
         case 2:
             int recordNo;
-
             cout << "Enter record number: ";
             cin >> recordNo;
-
             deleteRecord(fileName, recordNo);
             break;
         case 3:
-            displayContent(fileName,numRecord);
+            displayContent(fileName, numRecord);
             break;
         case 4:
-            int recordID;
-
+            int keySearch;
             cout << "Enter record number: ";
-            cin >> recordID;
-
-            searchRecord(fileName, recordNo);
+            cin >> keySearch;
+            int result = searchRecord(fileName, keySearch,numRecord,btree);
+            if(result == -1){
+                cout<<"Key "<<keySearch<<" not found ->"<<result<<endl;
+            }else{
+                cout<<"Key "<<keySearch<<" found at Address "<<result<<endl;
+            }
             break;
 
         }
     }
-    while(choice != 5);
-
-
-
-
-    // Construct a BTree of order 3, which stores int data
-//    BTree<int,5> t1;
-//    t1.Insert(3, 12);
-//    t1.Insert(7, 24);
-//    t1.Insert(10, 48);
-//    t1.Insert(24, 60);
-//    t1.Insert(14, 72);
-//    t1.Insert(19, 84);
-//    t1.Insert(30, 96);
-//    t1.Insert(15, 108);
-//    t1.Insert(1, 120);
-//    t1.Insert(5, 132);
-//    t1.Insert(2, 144);
-//
-//    t1.Print(); // Should output the following on the screen:
-//    /*
-//    1,4
-//      0
-//      2,3
-//      5
-//    */
+    while (choice != 5);
     return 0;
 }
 
 void createFile(string fileName, int numRecord)
 {
-    int arr[numRecord][11];
-    defaultArray(arr,numRecord);
-    fstream indexFile;
-    indexFile.open(fileName+".txt",ios::out);
-    indexFile.unsetf(ios::skipws);
-    for(int i = 0; i < numRecord; i++)
+    int** arr = new int* [numRecord];
+    for (int i = 0; i < numRecord; i++)
     {
-        for(int j = 0 ; j<11; j++)
+        arr[i] = new int[11];
+    }
+    defaultArray(arr, numRecord);
+    fstream indexFile;
+    indexFile.open(fileName+".txt", ios::out);
+    indexFile.unsetf(ios::skipws);
+    for (int i = 0; i < numRecord; i++)
+    {
+        for (int j = 0; j < 11; j++)
         {
-            indexFile.write((char*) &(arr[i][j]),sizeof(arr[i][j]));
+            indexFile.write((char*)&(arr[i][j]), sizeof(arr[i][j]));
         }
     }
     indexFile.close();
 }
 
-template <class T>
-int insertRecord(string fileName, int key, int address,BTree<T,5> tree)
+int deleteRecord(string fileName, int recordNo)
 {
-
+    return -1;
 }
 
-int deleteRecord (string fileName, int recordNo)
-{
-
-}
-
-void displayContent(string fileName,int numRecord)
+void displayContent(string fileName, int numRecord)
 {
     fstream indexFile1;
-    int arr2[numRecord][11];
-    indexFile1.open(fileName+".txt",ios::in);
-    string line;
-    for(int i = 0; i < numRecord; i++)
+    int** arr2 = new int*[numRecord];
+    for (int i = 0; i < numRecord; i++)
     {
-        for(int j = 0 ; j<11; j++)
+        arr2[i] = new int[11];
+    }
+    indexFile1.open(fileName+".txt", ios::in);
+    string line;
+    for (int i = 0; i < numRecord; i++)
+    {
+        for (int j = 0; j < 11; j++)
         {
-            indexFile1.read((char*) &arr2[i][j],sizeof(arr2[i][j]));
+            indexFile1.read((char*)&arr2[i][j], sizeof(arr2[i][j]));
         }
     }
-    printArr(arr2,numRecord);
+    printArr(arr2, numRecord);
     indexFile1.close();
 }
 
-int searchRecord (string fileName, int recordNo)
+int searchRecord(string fileName, int recordNo)
 {
 
-
+    return -1;
 }
 
-void defaultArray (int arr[][11],int numRecord)
+void defaultArray(int** arr, int numRecord)
 {
-
-
-    for(int i = 0 ; i < numRecord ; i++)
+    for (int i = 0; i < numRecord; i++)
     {
-        for(int j = 0; j < 11 ; j++)
+        for (int j = 0; j < 11; j++)
         {
-            if(j==1 && i != numRecord-1)
+            if (j == 1 && i != numRecord - 1)
             {
-                arr[i][j] = (i+1);
+                arr[i][j] = (i + 1);
             }
             else
             {
@@ -507,21 +537,17 @@ void defaultArray (int arr[][11],int numRecord)
             }
         }
     }
-
-
-
-
 }
 
-void printArr(int arr[][11],int numRecord)
+void printArr(int** arr, int numRecord)
 {
-    for(int i = 0; i < numRecord; i++)
+    for (int i = 0; i < numRecord; i++)
     {
-        for(int j = 0 ; j<11; j++)
+        for (int j = 0; j < 11; j++)
         {
-            cout<<arr[i][j]<<" ";
+            cout << arr[i][j] << " ";
         }
-        cout<<endl;
+        cout << endl;
     }
 }
 
