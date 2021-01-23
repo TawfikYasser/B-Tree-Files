@@ -1,6 +1,7 @@
 #include<iostream>
 #include<fstream>
 #include<vector>
+#include<iomanip>
 using namespace std;
 void createFile(string fileName, int numRecord);
 int deleteRecord(string fileName, int recordNo);
@@ -19,49 +20,32 @@ public:
     int noKey;
     Node* parent;
     bool flag = true;
-    Node()
-    {
-
-    }
     Node(int order)
     {
-        //create array of key
         key = new int[order + 1];
-        //get array of key NULL value
         for (int i = 0; i < order + 1; i++)
             key[i] = NULL;
-        //create array of address
         address = new int[order + 1];
-        //get array of address NULL value
         for (int i = 0; i < order + 1; i++)
             address[i] = NULL;
-        // the leaf true
         isLeaf = true;
-        //create array of children
-        child = new Node* [order + 1];
-        //no key =0
+        child = new Node * [order + 1];
         noKey = 0;
-        //get array of child = NULL
         for (int i = 0; i < order + 1; i++)
         {
             child[i] = NULL;
         }
-        parent = new Node();
+        parent = NULL;
     }
     Node* insertInNode(int& item, int add, Node* node, int order, Node* temp)
     {
-        //check if node is leaf
-        //cout << item << "     11111111111111"<< isLeaf<<endl;
         if (isLeaf == true)
         {
-            //cout << "temp" << item << isLeaf << endl;
             int i = order + 1;
-            //while key han value == NULL to find
             while (key[i - 1] == NULL)
             {
                 i--;
             }
-            //insert value in here position
             while (key[i - 1] > item && i != 0)
             {
                 key[i] = key[i - 1];
@@ -71,19 +55,13 @@ public:
 
             key[i] = item;
             address[i] = add;
-            // increament no of key in node
             noKey = noKey + 1;
         }
-        //check if node isnot leaf
         else
         {
-            //cout << "temp" << item << "22222222"<< endl;
             int i = 0;
-            // find its position
-            //change i < order
             while (i < noKey && item > key[i] && i < order)
             {
-                //cout << "333333333333333" << i << endl;
                 i++;
             }
             if (i == noKey)
@@ -91,42 +69,40 @@ public:
                 flag = false;
                 i--;
             }
-            //this is node.childe[i]
-            //child[i]->parent = this;
             child[i]->insertInNode(item, add, this, order, temp);
         }
-        //if node is full
         if (noKey == order + 1)
         {
-            //if node is root
             if (this == temp)
             {
-                //create node will be root
                 Node* newNode = new Node(order);
-                // the node will be not leaf becouse it has child
                 newNode->isLeaf = false;
                 newNode->child[0] = this;
-                //split root
-                newNode->split(this, order);
+                newNode->split(this, order, temp);
                 return newNode;
             }
             else
             {
-                //split w prf3 almo4kla llroot
-                node->split(this, order);
+                node->split(this, order, temp);
             }
 
         }
-        if (flag == false)
-        {
-            //   cout << ">>>>>>>>>>>>>>>" << item << endl << ">>>>>>>>>>>>>>>>>" << temp->noKey - 1;
-        }
         flag = true;
+        Node* current = new Node(order);
+        current = this;
+        while (current != this->parent && current != NULL)
+        {
+            for (int i = 0; current->child[i] != NULL; i++)
+            {
+                current->key[i] = child[i]->key[child[i]->noKey - 1];
+                current->address[i] = child[i]->address[child[i]->noKey - 1];
+            }
+            current = current->parent;
+        }
         return temp;
     }
-    void split(Node* node, int order)
+    void split(Node* node, int order, Node* root)
     {
-        //crear node will be wight of node
         Node* right = new Node(order);
 
         int minChild;
@@ -136,14 +112,12 @@ public:
         }
         else
         {
-            //3
+
             minChild = order / 2;
             minChild++;
         }
         int iR = 0;
-        // 2
         int check = (order) / 2;
-
         int counter = node->noKey;
         int temp = node->key[check];
         int tempadd = node->address[check];
@@ -152,8 +126,6 @@ public:
         int iC = 0;
         //
         int children = minChild;
-        //n2l al key mn minkey to nokey in right
-        //3
         for (int i = check + 1; i < counter; i++)
         {
             right->key[iR] = node->key[i];
@@ -164,57 +136,42 @@ public:
             node->noKey = (node->noKey) - 1;
             right->noKey = (right->noKey) + 1;
         }
-        //if node not leaf
         if (node->isLeaf == false)
         {
-            //n2l childred from node[min child]
             for (int i = children; i <= order; i++)
             {
                 right->child[iC] = node->child[i];
                 iC++;
-                //to delet tkrar null
                 node->child[i] = NULL;
             }
             //
             right->isLeaf = node->isLeaf;
         }
-        // mmkn feha mshkla
         int k = order - 1;
         while (child[k] != node)
         {
             child[k + 1] = child[k];
             k--;
         }
-        //child[order - 1] = NULL;
         child[k + 1] = right;
-        //right = NULL;
-        //int j = order - 1;
         int j = noKey;
-        //while (key[j - 1] == NULL && j != 0)
-        //{
-        //  j--;
-        //}
-        //shift to find position of item
         while (key[j - 1] > temp && j != 0)
         {
             key[j] = key[j - 1];
             address[j] = address[j - 1];
             j--;
         }
-        //insert the item in its position
         key[j] = temp;
         address[j] = tempadd;
         noKey = noKey + 1;
 
         j = noKey;
-        //shift to find position of item
         while (key[j - 1] > temp2 && j != 0)
         {
             key[j] = key[j - 1];
             address[j] = address[j - 1];
             j--;
         }
-        //insert the item in its position
         key[j] = temp2;
         address[j] = temp2add;
         noKey = noKey + 1;
@@ -232,13 +189,19 @@ public:
         }
         key[noKey] = NULL;
         address[noKey] = NULL;
+        right->parent = this;
+        node->parent = this;
+
     }
     void print(string space, int** arr, int index)
     {
-        if(isLeaf){
-           arr[index][0] = 0;
-        }else{
-           arr[index][0] = 1;
+        if(isLeaf)
+        {
+            arr[index][0] = 0;
+        }
+        else
+        {
+            arr[index][0] = 1;
         }
         int j = 0;
         int i = 1;
@@ -247,38 +210,6 @@ public:
             arr[index][i] = key[j];
             arr[index][++i] = address[j];
         }
-    }
-    void printl(Node* temp, int l)
-    {
-        if (l > 1 && isLeaf)
-        {
-            return;
-        }
-        else if (l == 1)
-        {
-            for (int i = 0; i < noKey; i++)
-            {
-                cout << key[i] << " ";
-            }
-        }
-
-        else
-        {
-            for (int i = 0; i <= noKey; i++)
-            {
-                child[i]->printl(temp, l - 1);
-            }
-        }
-
-    }
-    void height(Node* temp, int h, int& result)
-    {
-        if (isLeaf)
-        {
-            result = h;
-            return;
-        }
-        child[0]->height(temp, h + 1, result);
     }
 };
 
@@ -294,7 +225,6 @@ public:
 
     void Insert(int item, int add)
     {
-        //if tree is empty
         if (root == NULL)
         {
             root = new Node(o);
@@ -305,12 +235,11 @@ public:
         }
         else
         {
-            //cout << "root" << root->isLeaf<<endl;
             root = root->insertInNode(item, add, root, o, root);
         }
     }
 
-    void pre(Node* node, string space, int** arr)
+    void pre(Node* node, string space, int** arr,int& k)
     {
         static int c = 1;
         if (node == NULL)
@@ -319,14 +248,22 @@ public:
         }
         else
         {
-            node->print(space, arr, c);
-            arr[0][1] = c + 1;
+            node->print(space, arr, k);
+            if((k+1) == 10 )
+            {
+                arr[0][1] = -1;
+            }
+            else
+            {
+                arr[0][1] = k + 1;
+            }
+
             for (int i = 0; i < o; i++)
             {
                 if (node->child[i] != NULL)
                 {
-                    c++;
-                    pre(node->child[i], space, arr);
+                    k++;
+                    pre(node->child[i], space, arr, k);
                 }
 
             }
@@ -334,25 +271,9 @@ public:
     }
     void Print(int** arr)
     {
-        pre(root, "", arr);
+        int k=1;
+        pre(root, "", arr, k);
         cout << endl;
-    }
-
-    void printlevel()
-    {
-        int h = height();
-        for (int i = 1; i <= h; i++)
-        {
-            root->printl(root, i);
-            cout << endl;
-        }
-    }
-
-    int height()
-    {
-        int result;
-        root->height(root, 1, result);
-        return result;
     }
     void clear()
     {
@@ -395,10 +316,10 @@ int searchRecord(string fileName, int key,int num, BTree* btree)
     {
         for(int j = 1 ; j< 11 ; j+=2)
         {
-            cout<<arr[i][j]<<endl;
+
             if(arr[i][j] == key)
             {
-                cout<<arr[i][j]<<endl;
+
                 reNum = arr[i][j+1];
                 return reNum;
             }
@@ -455,16 +376,19 @@ int main()
             cout << "Enter record number: ";
             cin >> keySearch;
             int result = searchRecord(fileName, keySearch,numRecord,btree);
-            if(result == -1){
+            if(result == -1)
+            {
                 cout<<"Key "<<keySearch<<" not found ->"<<result<<endl;
-            }else{
+            }
+            else
+            {
                 cout<<"Key "<<keySearch<<" found at Address "<<result<<endl;
             }
             break;
-
         }
     }
     while (choice != 5);
+    cout<<"Thanks for using our application"<<endl;
     return 0;
 }
 
@@ -515,11 +439,6 @@ void displayContent(string fileName, int numRecord)
     indexFile1.close();
 }
 
-int searchRecord(string fileName, int recordNo)
-{
-
-    return -1;
-}
 
 void defaultArray(int** arr, int numRecord)
 {
@@ -543,12 +462,11 @@ void printArr(int** arr, int numRecord)
 {
     for (int i = 0; i < numRecord; i++)
     {
+
         for (int j = 0; j < 11; j++)
         {
-            cout << arr[i][j] << " ";
+            cout <<  setw(5) << arr[i][j];
         }
         cout << endl;
     }
 }
-
-

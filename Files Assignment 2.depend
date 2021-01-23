@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1611263488 source:t:\fcai\code\files assignment 2\main.cpp
+1611412826 source:t:\fcai\code\files assignment 2\main.cpp
 	<iostream>
 	<fstream>
 	<vector>
+	<iomanip>
 
